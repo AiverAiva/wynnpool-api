@@ -5,13 +5,15 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { GuildModule } from './guild/guild.module';
 import { PlayerModule } from './player/player.module';
+import { LootrunPoolModule } from './lootrun-pool/lootrun-pool.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
     MongooseModule.forRoot(process.env.MONGODB_URI as string, { dbName: 'wynnpool' }),
     GuildModule,
-    PlayerModule
+    PlayerModule,
+    LootrunPoolModule
   ],
   controllers: [AppController],
   providers: [AppService],
