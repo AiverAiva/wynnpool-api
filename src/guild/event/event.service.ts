@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { GuildMemberEvent } from './schemas/event.schema';
+import { GuildMemberEvent } from './event.schema';
 
 @Injectable()
 export class GuildEventService {
