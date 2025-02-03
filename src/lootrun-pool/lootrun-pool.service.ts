@@ -55,8 +55,7 @@ export class LootrunPoolService {
         const currentTimestamp = Math.floor(Date.now() / 1000);
         const sevenDaysAgo = currentTimestamp - 86400 * 7;
 
-        let latestEntry = await this.lootrunPoolModel.findOne().sort({ Timestamp: -1 });
-
+        let latestEntry = await this.lootrunPoolModel.findOne().sort({ 'data.Timestamp': -1 });
         if (!latestEntry || latestEntry?.data.Timestamp < sevenDaysAgo) {
             console.log('Fetching new data from external API');
 
