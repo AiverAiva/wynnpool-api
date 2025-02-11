@@ -13,6 +13,7 @@ export class PlayerController {
     ) { }
 
     @Get(':playerName')
+    //Playername/uuid identifier
     async getPlayer(@Param('playerName') playerName: string) {
         if (!playerName) {
             throw new HttpException('Missing Player Name parameter', HttpStatus.BAD_REQUEST);
@@ -22,6 +23,39 @@ export class PlayerController {
 
         try {
             const response = await firstValueFrom(this.httpService.get(EXTERNAL_API_URL));
+            // Fetch the guild data from the database using the player's UUID
+            const guild = await this.guildModel.findOne({
+                $or: [
+                    { [`members.owner.${response.data.uuid}`]: { $exists: true } },
+                    { [`members.chief.${response.data.uuid}`]: { $exists: true } },
+                    { [`members.strategist.${response.data.uuid}`]: { $exists: true } },
+                    { [`members.captain.${response.data.uuid}`]: { $exists: true } },
+                    { [`members.recruiter.${response.data.uuid}`]: { $exists: true } },
+                    { [`members.recruit.${response.data.uuid}`]: { $exists: true } },
+                ],
+            });
+
+            response.data.guild = null;
+            // Return if the player is not in any guild, no need to add guild data
+            if (!guild) return response.data;
+
+            // Determine the player's rank in the guild
+            let playerRank = '';
+            for (const rank of ['owner', 'chief', 'strategist', 'captain', 'recruiter', 'recruit']) {
+                if (guild.members[rank] && guild.members[rank][response.data.uuid]) {
+                    playerRank = rank;
+                    break;
+                }
+            }
+
+            // Add the guild data to the response
+            response.data.guild = {
+                uuid: guild.uuid,
+                name: guild.name,
+                prefix: guild.prefix,
+                rank: playerRank,
+            };
+
             return response.data;
         } catch (error) {
             if (error.response && error.response.status === 404) {
@@ -29,51 +63,6 @@ export class PlayerController {
             }
             console.error('Error fetching external data:', error);
             throw new HttpException('Unable to fetch data', HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @Get('guild/:uuid')
-    async getGuildByUuid(@Param('uuid') uuid: string) {
-        if (!uuid) {
-            throw new HttpException('Missing UUID parameter', HttpStatus.BAD_REQUEST);
-        }
-
-        try {
-            // Fetch the guild data from the database using the player's UUID
-            const guild = await this.guildModel.findOne({
-                $or: [
-                    { [`members.owner.${uuid}`]: { $exists: true } },
-                    { [`members.chief.${uuid}`]: { $exists: true } },
-                    { [`members.strategist.${uuid}`]: { $exists: true } },
-                    { [`members.captain.${uuid}`]: { $exists: true } },
-                    { [`members.recruiter.${uuid}`]: { $exists: true } },
-                    { [`members.recruit.${uuid}`]: { $exists: true } },
-                ],
-            });
-
-            if (!guild) {
-                throw new HttpException('Player not found in any guild', HttpStatus.NOT_FOUND);
-            }
-
-            // Determine the player's rank in the guild
-            let playerRank = '';
-            for (const rank of ['owner', 'chief', 'strategist', 'captain', 'recruiter', 'recruit']) {
-                if (guild.members[rank] && guild.members[rank][uuid]) {
-                    playerRank = rank;
-                    break;
-                }
-            }
-
-            return {
-                guild_uuid: guild.uuid,
-                guild_name: guild.name,
-                guild_prefix: guild.prefix,
-                player_uuid: uuid,
-                player_rank: playerRank,
-            };
-        } catch (error) {
-            console.error('Error fetching guild data:', error);
-            throw new HttpException('Unable to fetch guild data', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
