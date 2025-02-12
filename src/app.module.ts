@@ -7,6 +7,7 @@ import { GuildModule } from './guild/guild.module';
 import { PlayerModule } from './player/player.module';
 import { LootrunPoolModule } from './lootrun-pool/lootrun-pool.module';
 import { ItemModule } from './item/item.module';
+import { LeaderboardModule } from './leaderboard/leaderboard.module';
 
 @Module({
   imports: [
@@ -15,7 +16,8 @@ import { ItemModule } from './item/item.module';
     GuildModule,
     PlayerModule,
     LootrunPoolModule,
-    ItemModule
+    ItemModule,
+    LeaderboardModule
   ],
   controllers: [AppController],
   providers: [AppService],
