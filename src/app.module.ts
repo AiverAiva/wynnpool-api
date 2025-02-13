@@ -8,6 +8,7 @@ import { PlayerModule } from './player/player.module';
 import { LootrunPoolModule } from './lootrun-pool/lootrun-pool.module';
 import { ItemModule } from './item/item.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
+import { AspectPoolModule } from './aspect-pool/aspect-pool.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { LeaderboardModule } from './leaderboard/leaderboard.module';
     GuildModule,
     PlayerModule,
     LootrunPoolModule,
+    AspectPoolModule,
     ItemModule,
     LeaderboardModule
   ],
