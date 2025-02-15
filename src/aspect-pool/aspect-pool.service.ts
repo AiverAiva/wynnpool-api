@@ -29,7 +29,7 @@ export class AspectPoolService {
         // ✅ Use `.lean<AspectPool>()` to ensure TypeScript understands the returned object
         let latestEntry = await this.aspectPoolModel.findOne().sort({ 'data.Timestamp': -1 }).lean<AspectPool>();
 
-        if (!latestEntry || latestEntry.Timestamp < sevenDaysAgo) {
+        if (!latestEntry || latestEntry?.data.Timestamp < sevenDaysAgo) {
             console.log('Fetching new data from external API');
             const newData = await this.fetchExternalData();
 

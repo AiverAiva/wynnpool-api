@@ -3,7 +3,6 @@ import { Document } from 'mongoose';
 
 @Schema({ collection: 'aspect_pool' }) 
 export class AspectPool extends Document {
-    @Prop({ required: true }) Timestamp: number;
     @Prop({ type: Object, required: true }) data: any;
 }
 
