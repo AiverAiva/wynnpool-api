@@ -1,7 +1,19 @@
-import { Controller, Get, Param, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, HttpException, HttpStatus } from '@nestjs/common';
+import { ItemService } from './item.service';
 
 @Controller('item')
 export class ItemController {
+    constructor(private readonly itemService: ItemService) { }
+
+    @Post('search')
+    async searchItems(@Body() query: any) {
+        if (!query || Object.keys(query).length === 0) {
+            throw new HttpException('Query cannot be empty', HttpStatus.BAD_REQUEST);
+        }
+
+        return this.itemService.searchItems(query);
+    }
+
     @Get(':itemName')
     async getItem(@Param('itemName') itemName: string) {
         if (!itemName) {
