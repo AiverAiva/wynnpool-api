@@ -4,11 +4,18 @@ import { Model } from 'mongoose';
 
 @Injectable()
 export class ChangelogService {
-    constructor(@InjectModel('item_changelog') private readonly changelogModel: Model<any>) {}
+    constructor(@InjectModel('item_changelog') private readonly changelogModel: Model<any>) { }
 
     async getDistinctTimestamps(): Promise<number[]> {
-        return this.changelogModel.distinct('timestamp').exec();
+        const timestamps = await this.changelogModel.aggregate([
+            { $group: { _id: '$timestamp' } }, 
+            { $sort: { _id: -1 } },  // Sort in descending order (most recent first)
+            { $project: { _id: 0, timestamp: '$_id' } } 
+        ]).exec();
+
+        return timestamps.map(entry => entry.timestamp);
     }
+
 
     async getChangelogByTimestamp(timestamp: number) {
         const data = await this.changelogModel.find({ timestamp }).lean();
