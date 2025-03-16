@@ -8,9 +8,9 @@ export class ChangelogService {
 
     async getDistinctTimestamps(): Promise<number[]> {
         const timestamps = await this.changelogModel.aggregate([
-            { $group: { _id: '$timestamp' } }, 
+            { $group: { _id: '$timestamp' } },
             { $sort: { _id: -1 } },  // Sort in descending order (most recent first)
-            { $project: { _id: 0, timestamp: '$_id' } } 
+            { $project: { _id: 0, timestamp: '$_id' } }
         ]).exec();
 
         return timestamps.map(entry => entry.timestamp);
@@ -18,21 +18,27 @@ export class ChangelogService {
 
 
     async getChangelogByTimestamp(timestamp: number) {
-        const data = await this.changelogModel.find({ timestamp }).lean();
+        const pipeline = [
+            { $match: { timestamp } },
+            {
+                $group: {
+                    _id: "$status",
+                    items: { $push: "$$ROOT" }
+                }
+            },
+            { $project: { _id: 0, status: "$_id", items: 1 } }
+        ];
 
-        if (!data || data.length === 0) {
+        const categorizedData = await this.changelogModel.aggregate(pipeline).exec();
+
+        if (!categorizedData || categorizedData.length === 0) {
             throw new HttpException('No changelog data found for this timestamp', HttpStatus.NOT_FOUND);
         }
 
-        const categorizedData: Record<string, any[]> = {};
-        for (const item of data) {
-            const status = item.status || 'unknown'; // Default to 'unknown' if status is missing
-            if (!categorizedData[status]) {
-                categorizedData[status] = [];
-            }
-            categorizedData[status].push(item);
-        }
-
-        return categorizedData;
+        return categorizedData.reduce((acc, entry) => {
+            acc[entry.status] = entry.items;
+            return acc;
+        }, {} as Record<string, any[]>);
     }
+
 }
