@@ -14,4 +14,14 @@ export class ItemService {
     async streamSearch(query: any) {
         return this.itemModel.find(query).lean().cursor();
     }
+
+    async findItemById(itemId: string) {
+        const item = await this.itemModel.findOne({ id: itemId }).select('-_id').lean(); 
+
+        if (!item) {
+            throw new HttpException('Item not found', HttpStatus.NOT_FOUND);
+        }
+
+        return item;
+    }
 }
