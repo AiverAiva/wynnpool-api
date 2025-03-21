@@ -72,7 +72,7 @@ export class LootrunPoolService {
             }
 
             latestEntry = await this.lootrunPoolModel.create({
-                data: newData, 
+                data: newData,
             });
         }
 
@@ -84,13 +84,13 @@ export class LootrunPoolService {
             if (!latestEntry) {
                 throw new HttpException('No data found', HttpStatus.NOT_FOUND);
             }
-            return latestEntry.data; 
+            return latestEntry.data;
         }
 
         if (showAll) {
             const allEntries = await this.lootrunPoolModel
                 .find()
-                .sort({ 'data.Timestamp': -1 }) 
+                .sort({ 'data.Timestamp': -1 })
                 .lean();
             return allEntries.map(entry => entry.data);
         }
@@ -112,9 +112,48 @@ export class LootrunPoolService {
                 page,
                 limit,
                 totalPages: Math.ceil(totalCount / limit),
-                data: entries.map(entry => entry.data), 
+                data: entries.map(entry => entry.data),
             };
         }
+    }
+
+    async getLastSeenMythics() {
+        const mythicLastSeen: Record<string, { normal: number | null; shiny: number | null; icon?: string }> = {};
+
+        // ✅ Fetch all entries sorted by `data.Timestamp` descending (most recent first)
+        const lootPools = await this.lootrunPoolModel.find().sort({ "data.Timestamp": -1 }).lean();
+
+        // ✅ Extract the latest `Icon` data from the newest pool entry
+        const latestIconEntry = lootPools.find(entry => entry.data.Icon)?.data.Icon || {};
+
+        for (const entry of lootPools) {
+            const timestamp = entry.data.Timestamp;
+            const regions = entry.data.Loot || {};
+
+            for (const region of Object.values(regions) as any) {
+                if (region.Mythic) {
+                    for (const mythic of region.Mythic) {
+                        if (!mythicLastSeen[mythic]) {
+                            mythicLastSeen[mythic] = { normal: null, shiny: null, icon: latestIconEntry[mythic] || null };
+                        }
+                        if (!mythicLastSeen[mythic].normal) {
+                            mythicLastSeen[mythic].normal = timestamp;
+                        }
+                    }
+                }
+                if (region.Shiny?.Item) {
+                    const shinyItem = region.Shiny.Item;
+                    if (!mythicLastSeen[shinyItem]) {
+                        mythicLastSeen[shinyItem] = { normal: null, shiny: null, icon: latestIconEntry[shinyItem] || null };
+                    }
+                    if (!mythicLastSeen[shinyItem].shiny) {
+                        mythicLastSeen[shinyItem].shiny = timestamp;
+                    }
+                }
+            }
+        }
+
+        return mythicLastSeen;
     }
 
 }

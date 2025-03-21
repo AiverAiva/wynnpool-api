@@ -3,7 +3,7 @@ import { LootrunPoolService } from './lootrun-pool.service';
 
 @Controller('lootrun-pool')
 export class LootrunPoolController {
-    constructor(private readonly lootrunPoolService: LootrunPoolService) {}
+    constructor(private readonly lootrunPoolService: LootrunPoolService) { }
 
     @Get()
     async fetchLootrunPool(
@@ -24,5 +24,10 @@ export class LootrunPoolController {
             console.error('Error in /lootrun-pool endpoint:', error);
             throw new HttpException('Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Get('lastseen')
+    async getLastSeenMythics() {
+        return this.lootrunPoolService.getLastSeenMythics();
     }
 }
