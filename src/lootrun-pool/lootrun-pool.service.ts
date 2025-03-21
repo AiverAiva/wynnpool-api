@@ -119,22 +119,28 @@ export class LootrunPoolService {
 
     async getLastSeenMythics() {
         const mythicLastSeen: Record<string, { normal: number | null; shiny: number | null; icon?: string }> = {};
+        const iconMap: Record<string, string | undefined> = {}; // ✅ Fixed TypeScript issue
 
         // ✅ Fetch all entries sorted by `data.Timestamp` descending (most recent first)
         const lootPools = await this.lootrunPoolModel.find().sort({ "data.Timestamp": -1 }).lean();
 
-        // ✅ Extract the latest `Icon` data from the newest pool entry
-        const latestIconEntry = lootPools.find(entry => entry.data.Icon)?.data.Icon || {};
-
         for (const entry of lootPools) {
             const timestamp = entry.data.Timestamp;
             const regions = entry.data.Loot || {};
+            const icons = entry.data.Icon || {}; // ✅ Extract `Icon` data for this entry
+
+            // ✅ Update iconMap with the latest icons found
+            for (const [itemName, iconUrl] of Object.entries(icons)) {
+                if (!iconMap[itemName]) {
+                    iconMap[itemName] = iconUrl as string; // ✅ Save the first-found icon (most recent)
+                }
+            }
 
             for (const region of Object.values(regions) as any) {
                 if (region.Mythic) {
                     for (const mythic of region.Mythic) {
                         if (!mythicLastSeen[mythic]) {
-                            mythicLastSeen[mythic] = { normal: null, shiny: null, icon: latestIconEntry[mythic] || null };
+                            mythicLastSeen[mythic] = { normal: null, shiny: null, icon: undefined }; // ✅ Fix: Use `undefined`
                         }
                         if (!mythicLastSeen[mythic].normal) {
                             mythicLastSeen[mythic].normal = timestamp;
@@ -144,13 +150,18 @@ export class LootrunPoolService {
                 if (region.Shiny?.Item) {
                     const shinyItem = region.Shiny.Item;
                     if (!mythicLastSeen[shinyItem]) {
-                        mythicLastSeen[shinyItem] = { normal: null, shiny: null, icon: latestIconEntry[shinyItem] || null };
+                        mythicLastSeen[shinyItem] = { normal: null, shiny: null, icon: undefined }; // ✅ Fix: Use `undefined`
                     }
                     if (!mythicLastSeen[shinyItem].shiny) {
                         mythicLastSeen[shinyItem].shiny = timestamp;
                     }
                 }
             }
+        }
+
+        // ✅ Assign icons from `iconMap` to `mythicLastSeen`
+        for (const mythic in mythicLastSeen) {
+            mythicLastSeen[mythic].icon = iconMap[mythic] ?? undefined; // ✅ Fix: Ensure `string | undefined`
         }
 
         return mythicLastSeen;
