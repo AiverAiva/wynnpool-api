@@ -70,10 +70,16 @@ export class ChangelogService implements OnModuleInit {
 
         console.warn(`⚠️ Timestamp ${timestamp} not preloaded. Falling back to MongoDB...`);
         const categorizedData = await this.loadChangelogByTimestamp(timestamp);
+
         if (!categorizedData) {
             throw new HttpException('No changelog data found for this timestamp', HttpStatus.NOT_FOUND);
         }
 
-        return categorizedData; // ✅ Serve dynamically fetched data
+        // Store the fetched data in memory for future requests
+        this.preloadedChangelog.set(cacheKey, categorizedData);
+        console.log(`✅ Cached timestamp ${timestamp} after fallback.`);
+
+        return categorizedData; // Serve dynamically fetched data
     }
+
 }
