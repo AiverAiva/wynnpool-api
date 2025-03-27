@@ -71,9 +71,15 @@ export class LootrunPoolService {
                 throw new HttpException('Invalid API response format', HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            latestEntry = await this.lootrunPoolModel.create({
-                data: newData,
-            });
+            // Check if newData is identical to the latest entry
+            if (latestEntry && JSON.stringify(latestEntry.data) === JSON.stringify(newData)) {
+                console.log('🛑 Skipping database insert: New data is identical to the latest entry.');
+                return latestEntry; 
+            }
+
+            // If different, insert into database
+            latestEntry = await this.lootrunPoolModel.create({ data: newData });
+            console.log('✅ New lootrun pool data added to the database.');
         }
 
         if (!showAll && page === undefined && limit === undefined) {

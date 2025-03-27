@@ -37,12 +37,18 @@ export class AspectPoolService {
                 throw new HttpException('Invalid API response', HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            latestEntry = await this.aspectPoolModel.create({
-                data: newData,
-            });
+            // ✅ Compare only `data`, ignoring `_id`
+            if (latestEntry && JSON.stringify(latestEntry.data) === JSON.stringify(newData)) {
+                console.log('🛑 Skipping database insert: New data is identical to the latest entry.');
+                return latestEntry.data; // ✅ Return existing entry instead of inserting
+            }
+
+            // ✅ Insert only if data is different
+            latestEntry = await this.aspectPoolModel.create({ data: newData });
 
             return latestEntry.data;
         }
+
 
         if (!showAll && page === undefined && limit === undefined) {
             const latestEntry = await this.aspectPoolModel
@@ -54,7 +60,7 @@ export class AspectPoolService {
                 throw new HttpException('No data found', HttpStatus.NOT_FOUND);
             }
 
-            return latestEntry.data; 
+            return latestEntry.data;
         }
 
         if (showAll) {
@@ -83,7 +89,7 @@ export class AspectPoolService {
                 page,
                 limit,
                 totalPages: Math.ceil(totalCount / limit),
-                data: entries.map(entry => entry.data), 
+                data: entries.map(entry => entry.data),
             };
         }
 
