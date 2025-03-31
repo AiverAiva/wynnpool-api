@@ -1,4 +1,4 @@
-import { Controller, Get, Query, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Query, HttpException, HttpStatus, Param } from '@nestjs/common';
 import { LootrunPoolService } from './lootrun-pool.service';
 
 @Controller('lootrun-pool')
@@ -29,5 +29,14 @@ export class LootrunPoolController {
     @Get('lastseen')
     async getLastSeenMythics() {
         return this.lootrunPoolService.getLastSeenMythics();
+    }
+
+    @Get('history/:itemName')
+    async getItemHistory(@Param('itemName') itemName: string) {
+        const history = await this.lootrunPoolService.getItemHistory(itemName);
+        if (!history) {
+            throw new HttpException('Item not found', HttpStatus.NOT_FOUND);
+        }
+        return history;
     }
 }

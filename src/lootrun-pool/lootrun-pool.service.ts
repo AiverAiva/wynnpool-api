@@ -74,7 +74,7 @@ export class LootrunPoolService {
             // Check if newData is identical to the latest entry
             if (latestEntry && JSON.stringify(latestEntry.data) === JSON.stringify(newData)) {
                 console.log('🛑 Skipping database insert: New data is identical to the latest entry.');
-                return latestEntry; 
+                return latestEntry;
             }
 
             // If different, insert into database
@@ -173,4 +173,61 @@ export class LootrunPoolService {
         return mythicLastSeen;
     }
 
+    async getItemHistory(itemName: string) {
+        const records = await this.lootrunPoolModel
+            .find(
+                {
+                    $expr: {
+                        $gt: [
+                            {
+                                $size: {
+                                    $filter: {
+                                        input: { $objectToArray: "$data.Loot" },
+                                        as: "region",
+                                        cond: {
+                                            $or: [
+                                                { $in: [itemName, "$$region.v.Mythic"] }, // Mythic array contains item
+                                                { $eq: [itemName, "$$region.v.Shiny.Item"] } // Shiny.Item matches
+                                            ]
+                                        }
+                                    }
+                                }
+                            },
+                            0
+                        ]
+                    }
+                },
+                { "data.Loot": 1, "data.Icon": 1, "data.Timestamp": 1 }
+            )
+            .lean();
+
+        if (!records.length) return null;
+
+        let result = {
+            itemName: itemName,
+            icon: '',
+            dates: {} as Record<number, { type: string, region: string; tracker?: string }>,
+        };
+
+        for (const record of records) {
+            const timestamp = record.data.Timestamp; // Convert to ms
+
+            for (const [region, loot] of Object.entries(record.data.Loot)) {
+                const lootData = loot as { Mythic?: string[]; Shiny?: { Item: string; Tracker: string } };
+
+                if (lootData?.Mythic?.includes(itemName)) {
+                    result.dates[timestamp] = { type: 'normal', region: region };
+                }
+                if (lootData?.Shiny?.Item === itemName) {
+                    result.dates[timestamp] = { type: 'shiny', region: region, tracker: lootData.Shiny.Tracker };
+                }
+            }
+
+            if (!result.icon && record.data.Icon?.[itemName]) {
+                result.icon = record.data.Icon[itemName];
+            }
+        }
+
+        return result;
+    }
 }
