@@ -206,10 +206,8 @@ export function decodeBlocks(bytes: number[]): Block[] {
                 const idents: IdentificationDataBlock['identifications'] = [];
                 for (let idx = 0; idx < total; idx++) {
                     const kind = next();
-                    let base: number | null = null;
-                    if (extended) {
-                        base = next();
-                    }
+                    // decode base via varint if extended
+                    const base = extended ? decodeVarint(next) : null;
                     const isPre = idx < preidCount;
                     const roll: number | 'preid' = isPre ? 'preid' : next();
                     idents.push({ kind, base, roll });
