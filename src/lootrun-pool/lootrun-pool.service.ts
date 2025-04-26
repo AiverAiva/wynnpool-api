@@ -177,29 +177,35 @@ export class LootrunPoolService {
         const records = await this.lootrunPoolModel
             .find(
                 {
-                    $expr: {
-                        $gt: [
-                            {
-                                $size: {
-                                    $filter: {
-                                        input: { $objectToArray: "$data.Loot" },
-                                        as: "region",
-                                        cond: {
-                                            $or: [
-                                                { $in: [itemName, "$$region.v.Mythic"] }, // Mythic array contains item
-                                                { $eq: [itemName, "$$region.v.Shiny.Item"] } // Shiny.Item matches
-                                            ]
+                    $and: [
+                        { "data.Loot": { $exists: true, $ne: null } }, // 🛡️ Protection
+                        {
+                            $expr: {
+                                $gt: [
+                                    {
+                                        $size: {
+                                            $filter: {
+                                                input: { $objectToArray: "$data.Loot" },
+                                                as: "region",
+                                                cond: {
+                                                    $or: [
+                                                        { $in: [itemName, "$$region.v.Mythic"] },
+                                                        { $eq: [itemName, "$$region.v.Shiny.Item"] }
+                                                    ]
+                                                }
+                                            }
                                         }
-                                    }
-                                }
-                            },
-                            0
-                        ]
-                    }
+                                    },
+                                    0
+                                ]
+                            }
+                        }
+                    ]
                 },
                 { "data.Loot": 1, "data.Icon": 1, "data.Timestamp": 1 }
             )
             .lean();
+
 
         if (!records.length) return null;
 
