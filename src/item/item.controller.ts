@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, HttpException, HttpStatus, Query } from '@nestjs/common';
 import { ItemService } from './item.service';
 import { SearchItemDto } from './item.schema';
 
@@ -13,8 +13,12 @@ export class ItemController {
 
 
     @Get(':itemId')
-    async getItem(@Param('itemId') itemId: string) {
-        return this.itemService.findItemById(itemId);
+    async getItem(
+        @Param('itemId') itemId: string,
+        @Query('changelog') changelog?: string
+    ) {
+        const containChangelog = changelog === 'true';
+        return this.itemService.findItemById(itemId, containChangelog);
     }
 
     @Post('decode')

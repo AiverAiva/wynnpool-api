@@ -53,8 +53,12 @@ export class ItemService implements OnModuleInit {
         return this.itemModel.find(query).lean().cursor();
     }
 
-    async findItemById(itemId: string) {
-        const item = await this.itemModel.findOne({ id: itemId }).select('-_id').lean();
+    async findItemById(itemId: string, changelog = false) {
+        const projection = changelog
+            ? '-_id' // include all fields
+            : { _id: 0, changelog: 0 }; // exclude changelog
+
+        const item = await this.itemModel.findOne({ id: itemId }).select(projection).lean();
 
         if (!item) {
             throw new HttpException('Item not found', HttpStatus.NOT_FOUND);
