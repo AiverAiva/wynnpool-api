@@ -13,6 +13,7 @@ export class ChangelogService implements OnModuleInit {
 
     /** ✅ Preload all changelog data on startup */
     async onModuleInit() {
+        if(process.env.NODE_ENV !== 'production') return; // Skip preloading in non-production environments
         console.log('⏳ Preloading changelog data...');
         const timestamps = await this.changelogModel.distinct("timestamp").exec(); // ✅ Get unique timestamps
 

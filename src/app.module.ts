@@ -14,7 +14,7 @@ import { AspectPoolModule } from './aspect-pool/aspect-pool.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({ isGlobal: true }),
     MongooseModule.forRoot(process.env.MONGODB_URI as string, { dbName: 'wynnpool' }),
     ThrottlerModule.forRoot({
       throttlers: [
