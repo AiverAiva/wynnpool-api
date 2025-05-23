@@ -18,6 +18,7 @@ async function bootstrap() {
     origin: [
       process.env.FRONTEND_HOME_URL || 'http://localhost:3000',
       'https://wynnpool.weikuwu.me',
+      'https://weight.wynnpool.com',
       'https://www.wynnpool.com',
       'https://wynnpool.com'
     ],
