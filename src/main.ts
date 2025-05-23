@@ -15,7 +15,12 @@ declare module 'express' {
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
-    origin: process.env.FRONTEND_HOME_URL || 'http://localhost:3000',
+    origin: [
+      process.env.FRONTEND_HOME_URL || 'http://localhost:3000',
+      'https://wynnpool.weikuwu.me',
+      'https://www.wynnpool.com',
+      'https://wynnpool.com'
+    ],
     credentials: true,
   });
   app.use(
