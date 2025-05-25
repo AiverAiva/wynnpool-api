@@ -21,6 +21,17 @@ export class ItemController {
         return this.itemService.findItemById(itemId, containChangelog);
     }
 
+    @Get(':itemName/weight')
+    async getItemWeights(@Param('itemName') itemName: string) {
+        if (!itemName) {
+            throw new HttpException('Missing itemName parameter', HttpStatus.BAD_REQUEST);
+        }
+        const weights = await this.itemService.findWeightsByItemName(itemName);
+        // Remove _id and userId from each object
+        const result = weights.map(({ _id, userId, ...rest }) => rest);
+        return result;
+    }
+
     @Post('decode')
     decodeId(@Body('item') item: string) {
         if (!item) {
@@ -64,15 +75,6 @@ export class ItemController {
         };
     }
 
-    @Get('weight/:itemName')
-    async getItemWeights(@Param('itemName') itemName: string) {
-        if (!itemName) {
-            throw new HttpException('Missing itemName parameter', HttpStatus.BAD_REQUEST);
-        }
-        const weights = await this.itemService.findWeightsByItemName(itemName);
-        // Remove _id and userId from each object
-        const result = weights.map(({ _id, userId, ...rest }) => rest);
-        return result;
-    }
+
 
 }
