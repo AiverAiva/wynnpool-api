@@ -3,6 +3,7 @@ import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, FilterQuery, Model } from 'mongoose';
 import { Item } from './item.schema';
 import { parseIdString } from 'src/lib/wynntils-decode';
+import { calculateIdentificationRoll } from 'src/lib/itemUtils';
 
 @Injectable()
 export class ItemService implements OnModuleInit {
@@ -79,6 +80,7 @@ export class ItemService implements OnModuleInit {
             powders?: any[];
             identifications?: Record<string, number>;
             shinyStat?: { key: string; displayName: string; value: number };
+            rerollCount?: number;
         } = { itemName: '' };
 
         for (const block of blocks) {
@@ -111,6 +113,10 @@ export class ItemService implements OnModuleInit {
                     };
                 }
             }
+
+            if (block.name === 'RerollData') {
+                summary.rerollCount = block.rerollCount;
+            }
         }
 
         return summary;
@@ -119,6 +125,57 @@ export class ItemService implements OnModuleInit {
     async findWeightsByItemName(itemName: string): Promise<any[]> {
         const collection = this.connection.collection('weight_data')
         return collection.find({ item_name: itemName }).toArray();
+    }
+
+    processIdentification(original, input) {
+        if (!original?.identifications || !input?.identifications) return {};
+
+        const result = {};
+        Object.entries(input.identifications)
+            .filter(([key]) => original.identifications && key in original.identifications)
+            .forEach(([key, value]) => {
+                const originalStat = original.identifications?.[key];
+                if (!originalStat || typeof originalStat !== 'object') return;
+                if (typeof value !== 'number') return;
+
+                result[key] = calculateIdentificationRoll(
+                    key,
+                    originalStat,
+                    value
+                );
+            });
+        return result;
+    }
+
+    calculateWeightedScore(
+        identications: Record<string, any>,
+        weight: Record<string, number>
+    ): number {
+        let total = 0;
+        const weightIdentifications = weight.identifications || {};
+
+        const detailed = Object.entries(identications).map(([key, data]) => {
+            const weight = weightIdentifications[key] ?? 0;
+            let score: number;
+
+            if (weight < 0) {
+                // If the weight is negative, we need to invert the percentage
+                const invertedPercentage = 100 - data.percentage;
+                score = Math.abs(invertedPercentage * weight);
+                total += score;
+            } else {
+                score = data.percentage * weight;
+                total += score;
+            }
+
+            return { name: key, score: parseFloat(score.toFixed(3)) };
+        })
+
+        return parseFloat(total.toFixed(2))
+        // {
+        //     total: ,
+        //     detailed,
+        // };
     }
 
 }

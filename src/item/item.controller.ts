@@ -75,6 +75,32 @@ export class ItemController {
         };
     }
 
+    @Post('analyze')
+    async analyzeItem(@Body('item') item: string) {
+        if (!item) {
+            throw new HttpException('Missing item', HttpStatus.BAD_REQUEST);
+        }
 
+        const summary = this.itemService.summarize(item);
+        const original = await this.itemService.findItemById(summary.itemName);
+        const weights = await this.itemService.findWeightsByItemName(summary.itemName);
+        const result: any = { ...summary };
+        // Add processedIdentifications to the response
+        const processedIdentifications = this.itemService.processIdentification(original, summary);
+        result.identifications = processedIdentifications;
 
+        const weightedscores = {};
+        // Use the first weight map if available
+        if (weights && weights.length > 0) {
+            weights.forEach(weight => {
+                weightedscores[weight.weight_name] = this.itemService.calculateWeightedScore(processedIdentifications, weight);
+            });
+        }
+        
+        result.weightedScores = weightedscores;
+
+        return {
+            result,
+        };
+    }
 }
