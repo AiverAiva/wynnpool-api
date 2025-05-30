@@ -115,7 +115,7 @@ export class ItemController {
         result.weightedScores = weightedscores;
 
         return {
-            result,
+            ...result,
         };
     }
 }
