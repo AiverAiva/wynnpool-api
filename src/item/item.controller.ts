@@ -89,6 +89,21 @@ export class ItemController {
         const processedIdentifications = this.itemService.processIdentification(original, summary);
         result.identifications = processedIdentifications;
 
+        // Calculate overall average percentage from identifications
+        if (processedIdentifications && typeof processedIdentifications === 'object') {
+            const percentages = Object.values(processedIdentifications)
+                .map((id: any) => typeof id.percentage === 'number' ? id.percentage : null)
+                .filter((p): p is number => p !== null);
+            if (percentages.length > 0) {
+                const avg = percentages.reduce((a, b) => a + b, 0) / percentages.length;
+                result.overall = avg;
+            } else {
+                result.overall = null;
+            }
+        } else {
+            result.overall = null;
+        }
+
         const weightedscores = {};
         // Use the first weight map if available
         if (weights && weights.length > 0) {
@@ -96,7 +111,7 @@ export class ItemController {
                 weightedscores[weight.weight_name] = this.itemService.calculateWeightedScore(processedIdentifications, weight);
             });
         }
-        
+
         result.weightedScores = weightedscores;
 
         return {
