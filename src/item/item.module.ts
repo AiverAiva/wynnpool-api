@@ -4,7 +4,7 @@ import { ItemController } from './item.controller';
 import { ItemService } from './item.service';
 import { Item, ItemSchema } from './item.schema';
 import { ChangelogModule } from './changelog/changelog.module';
-import { VerifyItemModule } from './verify/verify-item.module';
+import { DatabaseItemModule } from './database/item-database.module';
 
 @Module({
     imports: [
@@ -12,7 +12,7 @@ import { VerifyItemModule } from './verify/verify-item.module';
             { name: Item.name, schema: ItemSchema },
         ]),
         ChangelogModule,
-        VerifyItemModule
+        DatabaseItemModule
     ],
     controllers: [ItemController],
     providers: [ItemService],

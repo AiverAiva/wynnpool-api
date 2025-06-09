@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-@Schema()
-export class VerifyItem extends Document {
+@Schema({ strict: false })
+export class DatabaseItem extends Document {
   @Prop({ required: true })
   itemName: string;
 
@@ -12,8 +12,8 @@ export class VerifyItem extends Document {
   @Prop({ required: true })
   owner: string;
 
-  @Prop({ type: Date, default: Date.now })
-  timestamp: Date;
+  @Prop({ type: Number, default: Date.now })
+  timestamp: number;
 }
 
-export const VerifyItemSchema = SchemaFactory.createForClass(VerifyItem);
+export const DatabaseItemSchema = SchemaFactory.createForClass(DatabaseItem);
