@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import * as session from 'express-session';
 import * as passport from 'passport';
 import { Request as ExpressRequest } from 'express';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 declare module 'express' {
   interface Request {
@@ -45,6 +46,16 @@ async function bootstrap() {
     res.header('Access-Control-Allow-Credentials', 'true');
     next();
   });
+
+  const config = new DocumentBuilder()
+    .setTitle('Wynnpool API')
+    .setDescription(':3')
+    .setVersion('1.0')
+    .addTag('users')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('', app, document);
 
   await app.listen(process.env.PORT ?? 8000);
 }
