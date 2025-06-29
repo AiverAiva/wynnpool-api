@@ -2,16 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as session from 'express-session';
 import * as passport from 'passport';
-import { Request as ExpressRequest } from 'express';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-
-declare module 'express' {
-  interface Request {
-    user?: any;
-    logout?: (callback: (err: any) => void) => void;
-    isAuthenticated?: () => boolean;
-  }
-}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -27,14 +18,14 @@ async function bootstrap() {
   });
   app.use(
     session({
-      secret: process.env.JWT_SECRET || 'changeme',
+      secret: process.env.JWT_SECRET!,
       resave: false,
       saveUninitialized: false,
       cookie: {
-        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+        // maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
         httpOnly: true,
-        sameSite: 'lax',
-        secure: false,
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        secure: process.env.NODE_ENV === 'production'
       },
     })
   );

@@ -3,13 +3,6 @@ import { Request, Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from '../users/users.service';
 
-import { Request as ExpressRequest } from 'express';
-declare module 'express' {
-    interface Request {
-        login?: (user: any, done: (err?: any) => void) => void;
-    }
-}
-
 @Controller('auth')
 export class AuthController {
     constructor(private readonly usersService: UsersService) { }
