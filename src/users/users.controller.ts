@@ -4,13 +4,17 @@ import { UsersService } from './users.service';
 import { AuthenticatedGuard } from '../auth/authenticated.guard';
 import axios from 'axios';
 import qs from 'qs';
+import { JwtService } from '@nestjs/jwt';
 
 @Controller('user')
 export class UsersController {
-    constructor(private readonly usersService: UsersService) { }
+    constructor(
+        private readonly usersService: UsersService,
+        private readonly jwtService: JwtService
+    ) { }
 
     private setAuthCookie(res: any, discordId: string) {
-        const token = this['jwtService'].sign({ discordId }, { secret: process.env.JWT_SECRET, expiresIn: '30d' });
+        const token = this.jwtService.sign({ discordId }, { secret: process.env.JWT_SECRET, expiresIn: '30d' });
         res.cookie(
             process.env.NODE_ENV === 'production' ? '__Secure-wynnpool.session-token' : 'wynnpool.session-token',
             token,
