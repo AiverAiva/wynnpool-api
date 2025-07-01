@@ -48,11 +48,11 @@ import { Roles } from 'src/auth/roles.decorator';
                 ...data,
                 description: data.description || "",
                 type: "Wynnpool",
-                author: req.user?.discordProfile?.username || req.user?.discordId || "Wynnpool Weight Team",
+                author: "Wynnpool Weight Team",
+                // req.user?.discordProfile?.username || req.user?.discordId || 
                 timestamp: Date.now(),
             };
-            await this.weightService.insertWeight(newWeight);
-            // Optionally: send webhook here if needed
+            await this.weightService.insertWeight(newWeight, req.user);
             return { success: true };
         }
 
