@@ -1,4 +1,4 @@
-import { Controller, Get, Req, UseGuards, Param } from '@nestjs/common';
+import { Controller, Get, Req, Res, UseGuards, Param } from '@nestjs/common';
 import { Request } from 'express';
 import { UsersService } from './users.service';
 import { AuthenticatedGuard } from '../auth/authenticated.guard';
@@ -9,9 +9,25 @@ import qs from 'qs';
 export class UsersController {
     constructor(private readonly usersService: UsersService) { }
 
+    private setAuthCookie(res: any, discordId: string) {
+        const token = this['jwtService'].sign({ discordId }, { secret: process.env.JWT_SECRET, expiresIn: '30d' });
+        res.cookie(
+            process.env.NODE_ENV === 'production' ? '__Secure-wynnpool.session-token' : 'wynnpool.session-token',
+            token,
+            {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                path: '/',
+                maxAge: 30 * 24 * 60 * 60 * 1000,
+                ...(process.env.NODE_ENV === 'production' ? { domain: '.wynnpool.com' } : {}),
+            }
+        );
+    }
+
     @UseGuards(AuthenticatedGuard)
     @Get('me')
-    async getMe(@Req() req: Request) {
+    async getMe(@Req() req: Request, @Res() res: any) {
         const user = req.user as any;
         if (!user || !user.discordId) return user;
 
@@ -65,7 +81,9 @@ export class UsersController {
         if (updated) {
             await this.usersService.upsertByDiscordId(user.discordId, discordProfile, accessToken, refreshToken);
         }
-        return { ...user, discordProfile, accessToken, refreshToken };
+        // Sliding expiration: re-set the cookie
+        this.setAuthCookie(res, user.discordId);
+        return res.json({ ...user, discordProfile, accessToken, refreshToken });
     }
 
     @UseGuards(AuthenticatedGuard)
@@ -78,8 +96,10 @@ export class UsersController {
 
     @UseGuards(AuthenticatedGuard)
     @Get('me/quick')
-    async getDatabaseUser(@Req() req: Request) {
+    async getDatabaseUser(@Req() req: Request, @Res() res: any) {
         const user = req.user as any;
-        return user;
+        // Sliding expiration: re-set the cookie
+        this.setAuthCookie(res, user.discordId);
+        return res.json(user);
     }
 }
