@@ -2,10 +2,37 @@ import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from '../users/users.service';
+import { JwtService } from '@nestjs/jwt';
+// Extend Express Request type to include user
+import { User } from '../shared/schemas/user.schema';
+declare module 'express' {
+  interface Request {
+    user?: User | any;
+  }
+}
 
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly usersService: UsersService) { }
+    constructor(
+        private readonly usersService: UsersService,
+        private readonly jwtService: JwtService
+    ) { }
+
+    private getCookieOptions() {
+        const isProd = process.env.NODE_ENV === 'production';
+        return {
+            httpOnly: true,
+            secure: isProd,
+            sameSite: isProd ? 'none' as const : 'lax' as const,
+            path: '/',
+        };
+    }
+
+    private getCookieName() {
+        return process.env.NODE_ENV === 'production'
+            ? '__Secure-wynnpool.session-token'
+            : 'wynnpool.session-token';
+    }
 
     @Get('discord')
     @UseGuards(AuthGuard('discord'))
@@ -18,25 +45,21 @@ export class AuthController {
     async discordCallback(@Req() req: Request, @Res() res: Response) {
         const user = req.user as any;
         await this.usersService.upsertByDiscordId(user.discordId, user.discordProfile, user.accessToken, user.refreshToken);
-        // Explicitly log the user in to establish the session and set the cookie
-        if (typeof req.login === 'function') {
-            req.login(user, (err) => {
-                res.redirect(process.env.FRONTEND_HOME_URL || '/');
-            });
-        } else {
-            res.status(500).send('Login method not available');
-        }
+        // Issue JWT and set as secure, httpOnly cookie
+        const token = this.jwtService.sign({ discordId: user.discordId }, { secret: process.env.JWT_SECRET, expiresIn: '30d' });
+        res.cookie(this.getCookieName(), token, this.getCookieOptions());
+        res.redirect(process.env.FRONTEND_HOME_URL || '/');
     }
 
     @Get('logout')
     async logout(@Req() req: Request, @Res() res: Response) {
-        if (typeof req.logout === 'function') {
-            req.logout(() => {
-                res.clearCookie('connect.sid'); // Optional: clear session cookie
-                res.json({ success: true });
-            });
-        } else {
-            res.json({ success: true });
-        }
+        res.clearCookie(this.getCookieName(), { path: '/' });
+        res.json({ success: true });
+    }
+
+    @Get('test-cookie')
+    async testCookie(@Res() res: Response) {
+        res.cookie(this.getCookieName(), 'test-value', this.getCookieOptions());
+        res.json({ success: true, message: 'Cookie set' });
     }
 }

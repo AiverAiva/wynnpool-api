@@ -33,7 +33,6 @@ import { UsersModule } from './users/users.module';
     ItemModule,
     LeaderboardModule,
     AuthModule,
-    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService,
