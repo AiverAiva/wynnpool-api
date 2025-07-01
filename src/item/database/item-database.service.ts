@@ -18,6 +18,21 @@ export class DatabaseItemService {
     if (!data.itemName || !data.originalString || !data.owner) {
       throw new Error('Missing required fields.');
     }
+    // If owner is a name, fetch UUID from Mojang API
+    if (typeof data.owner === 'string') {
+      try {
+        const resp = await fetch(`https://api.mojang.com/users/profiles/minecraft/${data.owner}`);
+        if (resp.ok) {
+          const mojang = await resp.json();
+          if (mojang && mojang.id) {
+            data.owner = mojang.name;
+            (data as any).uuid = mojang.id;
+          }
+        }
+      } catch (e) {
+        throw new Error('unknown owner');
+      }
+    }
     await this.databaseItemModel.create(data);
     return { success: true };
   }

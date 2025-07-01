@@ -14,7 +14,7 @@ export class DatabaseItemController {
   }
 
   @Post()
-  @UseGuards(AuthenticatedGuard)
+  @UseGuards(AuthenticatedGuard, RolesGuard)
   @Roles('ITEM_DATABASE')
   async addVerifyItem(@Body() body: { itemName: string; originalString: string; owner: string }, @Req() req) {
     // Optionally, you can use req.user to set owner automatically

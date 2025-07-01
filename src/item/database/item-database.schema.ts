@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-@Schema({ strict: false })
+@Schema({ strict: false, versionKey: false })
 export class DatabaseItem extends Document {
   @Prop({ required: true })
   itemName: string;
