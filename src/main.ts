@@ -12,6 +12,7 @@ async function bootstrap() {
       'https://wynnpool.weikuwu.me',
       'https://weight.wynnpool.com',
       'https://www.wynnpool.com',
+      'https://dev.wynnpool.com',
       'https://wynnpool.com'
     ],
     credentials: true,
